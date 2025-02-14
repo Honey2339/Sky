@@ -1,9 +1,7 @@
 package main
 
-import (
-	parser "SkyRP/parser"
-)
+import "SkyRP/config"
 
-func main(){
-	parser.YAMLtoJSON()
+func main() {
+	config.ConfigData()
 }
