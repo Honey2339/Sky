@@ -24,5 +24,5 @@ type Rules struct {
 }
 
 type RootConfigSchema struct {
-	Server ServerConfig
+	Server ServerConfig `json:"server"`
 }
