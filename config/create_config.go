@@ -14,23 +14,35 @@ type Config struct {
 
 func Create_config() error {
 	configPath, err := Get_config()
-	if err != nil {
-		return err
-	}
-
-	// You need a add_config function here
-	// So that when a config is created, You can ask user to fill the data
-	// Add_config()
-
-	config := Config{
-		Key:   "exampleKey",
-		Value: "exampleValue",
-	}
-
-	file, err := os.Create(configPath)
+	
+	var config RootConfigSchema
+	var file *os.File
+	var checkFile bool = false
 	
 	if err != nil {
 		return err
+	}
+	
+	_, err = os.Stat(configPath)
+	
+	if err == nil {
+		checkFile = true
+	}
+	
+	if(!checkFile){
+		file, err = os.Create(configPath)
+
+		if err != nil {
+			return err
+		}
+	
+		config , err = Add_config()
+		
+		if err != nil {
+			return err
+		}
+	} else {
+		log.Error("Config File Already Exist")
 	}
 	
 	defer file.Close()
@@ -41,7 +53,7 @@ func Create_config() error {
 		return err
 	}
 
-	log.Info("Config file created at:", configPath)
+	log.Print("Config file created at:", configPath)
 
 	return nil
 }
