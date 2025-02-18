@@ -18,5 +18,6 @@ func HttpServer() {
 	PORT := ":" + strconv.Itoa(data.Server.Listen)
 
 	log.Infof("Sky is running on %s", PORT)
+	http.HandleFunc("/", ProxyHandler)
 	http.ListenAndServe(PORT, nil)
 }
