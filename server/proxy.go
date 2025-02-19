@@ -2,8 +2,10 @@ package server
 
 import (
 	"SkyRP/config"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sync"
 )
 
@@ -12,32 +14,32 @@ var mu sync.Mutex
 
 func groupUpstream(data config.RootConfigSchema) map[string][]string {
 	grouped := make(map[string][]string)
-
 	for _, upstream := range data.Server.Upstreams {
-		grouped[upstream.URL] = append(grouped[upstream.URL], upstream.URL)
+		parsedUrl, err := url.Parse(upstream.URL)
+		if err != nil {
+			continue
+		}
+		grouped[parsedUrl.Path] = append(grouped[parsedUrl.Path], upstream.URL)
 	}
 
 	return grouped
 }
 
-func getNextUpstream(data config.RootConfigSchema, path string) string {
+func getNextUpstream(data config.RootConfigSchema, path string) (string, error) {
 	mu.Lock()
 	defer mu.Unlock()
 	
 	grouped := groupUpstream(data)
-	println("the Path variable : ", path)
-	for upstreamPath, servers := range grouped {
-		println("the upstreamPath variable : ", upstreamPath)
-		
-		if path == upstreamPath {
-			idx := nodeIdxMap[upstreamPath]
-			nodeIdxMap[upstreamPath] = (idx + 1) % len(servers)
 
-			return servers[idx]
-		}
+	servers, exists := grouped[path]
+	if !exists || len(servers) == 0 {
+		return "", fmt.Errorf("no upstream available for path: %s", path)
 	}
 
-	return ""
+	idx := nodeIdxMap[path]
+	nodeIdxMap[path] = (idx + 1) % len(servers)
+
+	return servers[idx], nil
 }
 
 func ProxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,9 +50,14 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	targetUrl := getNextUpstream(data, r.URL.Path)
+	targetUrl, err := getNextUpstream(data, r.URL.Path)
+	if err != nil {
+		http.Error(w, "No available upstreams", http.StatusServiceUnavailable)
+		fmt.Println("Error getting upstream:", err)
+		return
+	}
 
-	proxyReq, err := http.NewRequest(r.Method, targetUrl + r.RequestURI, r.Body)
+	proxyReq, err := http.NewRequest(r.Method, targetUrl, r.Body)
 
 	if err != nil {
 		http.Error(w, "Failed to create request", http.StatusInternalServerError)
