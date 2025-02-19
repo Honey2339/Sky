@@ -7,19 +7,37 @@ import (
 	"sync"
 )
 
-var nodeIdx int
+var nodeIdxMap = make(map[string]int)
 var mu sync.Mutex
 
-func getNextUpstream(data config.RootConfigSchema) string {
-	mu.Lock()
-	defer mu.Unlock()
+func groupUpstream(data config.RootConfigSchema) map[string][]string {
+	grouped := make(map[string][]string)
 
-	if len(data.Server.Upstreams) == 0 {
-		return ""
+	for _, upstream := range data.Server.Upstreams {
+		grouped[upstream.URL] = append(grouped[upstream.URL], upstream.URL)
 	}
 
-	nodeIdx = (nodeIdx + 1) % len(data.Server.Upstreams)
-	return data.Server.Upstreams[nodeIdx].URL
+	return grouped
+}
+
+func getNextUpstream(data config.RootConfigSchema, path string) string {
+	mu.Lock()
+	defer mu.Unlock()
+	
+	grouped := groupUpstream(data)
+	println("the Path variable : ", path)
+	for upstreamPath, servers := range grouped {
+		println("the upstreamPath variable : ", upstreamPath)
+		
+		if path == upstreamPath {
+			idx := nodeIdxMap[upstreamPath]
+			nodeIdxMap[upstreamPath] = (idx + 1) % len(servers)
+
+			return servers[idx]
+		}
+	}
+
+	return ""
 }
 
 func ProxyHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,12 +48,7 @@ func ProxyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	targetUrl := getNextUpstream(data)
-
-	if err != nil {
-		http.Error(w, "Invalid target URL", http.StatusInternalServerError)
-		return
-	}
+	targetUrl := getNextUpstream(data, r.URL.Path)
 
 	proxyReq, err := http.NewRequest(r.Method, targetUrl + r.RequestURI, r.Body)
 
