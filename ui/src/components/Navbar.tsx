@@ -16,13 +16,14 @@ const Navbar = () => {
     <header
       className={cn(
         geistSans.className,
-        `sticky top-0 z-50 w-full border-b border-zinc-700 bg-zinc-900 backdrop-blur`
+        `sticky top-0 z-50 w-full flex justify-center items-center border-b border-zinc-700 bg-zinc-900 backdrop-blur`
       )}
     >
-      <div className="container flex h-12 max-w-screen-2xl items-center">
+      <div className="container flex h-12 max-w-4xl items-center">
         <Link href="/" className="flex items-center space-x-2">
-          {/* <Image src={Logo} height={100} width={50} alt="" /> */}
-          {/* <span className="font-semibold">Sky</span> */}
+          <span className="font-medium text-white font-serif text-2xl ml-1">
+            Sky
+          </span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-6 ">
@@ -30,10 +31,14 @@ const Navbar = () => {
               href="/docs"
               className="text-sm text-white font-medium transition duration-200 hover:underline"
             >
-              Copy Cmd
+              {">_"}Copy Cmd
             </Link>
             <Button variant="secondary" size="sm" className="" asChild>
-              <Link href="/dashboard" className="font-medium">
+              <Link
+                target="_blank"
+                href="https://www.prasoon.lol/"
+                className="font-medium"
+              >
                 Contact
               </Link>
             </Button>

@@ -29,7 +29,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-zinc-900`}
       >
         <Navbar />
-        <div className="container">{children}</div>
+        <div className="flex items-center justify-center">
+          <div className="max-w-4xl container border-r border-l border-zinc-700">
+            {children}
+          </div>
+        </div>
       </body>
     </html>
   );
